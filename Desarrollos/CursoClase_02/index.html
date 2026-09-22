@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBudget Celeste </title>
+    <style>
+        :root {
+            --color-bg: #f4f6f9;
+            --color-card: #ffffff;
+            --color-primary: #4f46e5;
+            --color-primary-dark: #4338ca;
+            --color-text: #1f2937;
+            --color-muted: #6b7280;
+            --color-border: #e5e7eb;
+            --color-danger-bg: #fee2e2;
+            --color-danger-text: #991b1b;
+            --color-warning-bg: #fef3c7;
+            --color-warning-text: #92400e;
+            --color-success-bg: #dcfce7;
+            --color-success-text: #166534;
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--color-bg);
+            color: var(--color-text);
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 16px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+            font-size: 2rem;
+            color: var(--color-primary-dark);
+        }
+
+        header p {
+            margin: 0;
+            color: var(--color-muted);
+        }
+
+        main {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        form {
+            background: var(--color-card);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        form>div {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--color-text);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        button {
+            background: var(--color-primary);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        button:hover {
+            background: var(--color-primary-dark);
+        }
+
+        #resultCard {
+            background: var(--color-card);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            border-left: 6px solid var(--color-primary);
+        }
+
+        #resultHours {
+            margin: 0 0 8px;
+            font-size: 1.1rem;
+        }
+
+        #resultAdvice {
+            margin: 0;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: var(--color-border);
+        }
+
+        /* Colores segun el nivel de impacto financiero, aplicados via clase en JS */
+        #resultCard.level-danger {
+            border-left-color: var(--color-danger-text);
+        }
+
+        #resultCard.level-danger #resultAdvice {
+            background: var(--color-danger-bg);
+            color: var(--color-danger-text);
+        }
+
+        #resultCard.level-warning {
+            border-left-color: var(--color-warning-text);
+        }
+
+        #resultCard.level-warning #resultAdvice {
+            background: var(--color-warning-bg);
+            color: var(--color-warning-text);
+        }
+
+        #resultCard.level-success {
+            border-left-color: var(--color-success-text);
+        }
+
+        #resultCard.level-success #resultAdvice {
+            background: var(--color-success-bg);
+            color: var(--color-success-text);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>SmartBudget</h1>
+        <p>Practica para realizar compras inteligentes</p>
+    </header>
+    <main>
+        <form id="budgetform">
+            <div>
+                <label for="itemname">Ingresa el producto</label>
+                <input type="text" id="itemname" name="itemname" required>
+            </div>
+            <div>
+                <div>
+                    <label for="itemprice">Precio</label>
+                    <input type="number" id="itemprice" name="itemprice" required>
+                </div>
+                <div>
+                    <label for="monthlySalary">Sueldo Mensual</label>
+                    <input type="number" id="monthlySalary" placeholder="3000" min="1" max="90000" name="monthlySalary"
+                        required>
+
+                </div>
+                <button type="submit"> Analizar impacto financiero </button>
+            </div>
+        </form>
+        <section id="resultCard" hidden>
+            <h2 id="resultHours">
+
+            </h2>
+            <p id="resultAdvice">
+
+            </p>
+        </section>
+    </main>
+    <script>
+        const budgetForm = document.getElementById("budgetform")
+        const resultCard = document.getElementById("resultCard")
+        const resultHours = document.getElementById("resultHours")
+        const resultAdvice = document.getElementById("resultAdvice")
+
+        budgetForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const item = document.getElementById("itemname").value;
+            const price = document.getElementById("itemprice").value;
+            const salary = document.getElementById("monthlySalary").value;
+
+            if (salary <= 0) return;
+
+            const hourlyRate = salary / 160;
+            const hoursNeeded = (price / hourlyRate).toFixed(1);
+
+            resultHours.textContent = `${item}: necesitas ${hoursNeeded} horas de trabajo`;
+
+            // Quitamos cualquier clase de nivel previa antes de asignar la nueva
+            resultCard.classList.remove("level-danger", "level-warning", "level-success");
+
+            if (hoursNeeded > 40) {
+                resultCard.classList.add("level-danger");
+                resultAdvice.innerHTML = "<strong>Atencion: Esta compra equivale a mas de una semana de trabajo. Considera esperar 48 hrs antes de comprarla</strong>"
+            } else if (hoursNeeded > 10) {
+                resultCard.classList.add("level-warning");
+                resultAdvice.innerHTML = "<strong>Evaluacion Moderada</strong>"
+            } else {
+                resultCard.classList.add("level-success");
+                resultAdvice.innerHTML = "<strong>Compra Accesible</strong>"
+            }
+
+            resultCard.removeAttribute('hidden')
+        });
+    </script>
+
+</body>
+
+</html>
