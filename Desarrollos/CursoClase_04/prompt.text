@@ -1,0 +1,571 @@
+Quiero que actues como un desarrollador web con experiencia en javascript y html puro para completar las funcionalidades de este archivo y utilizar de base el ejemplo index.html de la carpeta CursoClase_04 para la conectividad con Firebase
+
+IMPORTANTE:
+- El HTML actual ES LA BASE DEL PROYECTO.
+- NO quiero que lo rehagas desde cero.
+- Conserva el diseño actual, Bootstrap, buscador, filtro, tarjetas de productos, carrito y Toast.
+- Agrega únicamente las funcionalidades que hacen falta para cumplir con los siguientes requerimientos.
+- No elimines funcionalidades que ya funcionan.
+- Mantén todo en un único archivo HTML.
+- Usa el  ejemplo index.html de la carpeta CursoClase_04 para la conectividad a la BD
+- No cambies la URL de Firebase.
+- Entrega al final el código COMPLETO de index.html de la carpeta CursoClase_04
+
+
+REQUERIMIENTO 
+
+
+El proyecto debe cumplir con:
+
+1. Módulo Administrador: Gestión de Inventario (CRUD de Productos)
+
+2. Módulo de Comercio: Carrito y Procesamiento de Órdenes
+
+3. Módulo de Experiencia de Usuario (UX & Asincronía)
+
+
+1. FIREBASE
+
+Los nodos que se deben utilizar son:
+
+/productos.json
+/carrito.json
+/ordenes.json
+
+Ejemplos:
+
+GET productos:
+https://cosami-ejercicio-default-rtdb.firebaseio.com/productos.json
+
+POST producto:
+https://cosami-ejercicio-default-rtdb.firebaseio.com/productos.json
+
+DELETE producto:
+https://cosami-ejercicio-default-rtdb.firebaseio.com/productos/{id}.json
+
+GET carrito:
+https://cosami-ejercicio-default-rtdb.firebaseio.com/carrito.json
+
+POST carrito:
+https://cosami-ejercicio-default-rtdb.firebaseio.com/carrito.json
+
+DELETE carrito:
+https://cosami-ejercicio-default-rtdb.firebaseio.com/carrito.json
+
+POST orden:
+https://cosami-ejercicio-default-rtdb.firebaseio.com/ordenes.json
+
+
+2. REEMPLAZAR EL ARREGLO ESTÁTICO
+
+Actualmente el HTML tiene:
+
+const products = [
+    { id: 1, name: "Teclado Mecánico", price: 85.00, category: "Periféricos" },
+    ...
+];
+
+Elimina el uso de este arreglo estático como fuente principal de productos.
+
+Los productos deben cargarse desde Firebase mediante:
+
+GET /productos.json
+
+Crear una función:
+
+async function obtenerProductos()
+
+Debe:
+
+1. Consultar Firebase.
+2. Obtener los productos.
+3. Convertir correctamente la respuesta de Firebase.
+4. Conservar el ID generado por Firebase.
+5. Guardar los productos en una variable local para poder filtrarlos.
+6. Llamar a renderProducts().
+
+Firebase devuelve algo similar a:
+
+{
+    "-OABC123": {
+        "name": "Teclado Mecánico",
+        "price": 85,
+        "category": "Periféricos",
+        "image": "...",
+        "stock": 10
+    }
+}
+
+Debe convertirse a algo como:
+
+[
+    {
+        id: "-OABC123",
+        name: "Teclado Mecánico",
+        price: 85,
+        category: "Periféricos",
+        image: "...",
+        stock: 10
+    }
+]
+
+IMPORTANTE:
+No perder el ID generado por Firebase porque será necesario para DELETE.
+
+3. ADMINISTRADOR - CREAR PRODUCTOS
+
+Agrega una sección de administrador al HTML actual.
+
+No reemplaces la tienda.
+
+Puede ser una sección nueva debajo del catálogo o una pestaña/modal.
+
+Debe existir un formulario para crear productos.
+
+Campos:
+
+- Nombre del producto
+- Precio
+- Categoría
+- URL de imagen
+- Cantidad en stock
+
+Ejemplo:
+
+Nombre:
+Teclado RGB
+
+Precio:
+85.00
+
+Categoría:
+Periféricos
+
+URL de imagen:
+https://...
+
+Cantidad:
+10
+
+Al enviar:
+
+1. Validar los campos.
+2. Crear el objeto:
+
+{
+    name: "...",
+    price: 85.00,
+    category: "...",
+    image: "...",
+    stock: 10
+}
+
+3. Ejecutar:
+
+POST /productos.json
+
+4. Si la respuesta es correcta:
+   - Mostrar Toast:
+     "Producto creado correctamente"
+   - Limpiar formulario.
+   - Volver a ejecutar obtenerProductos().
+   - Actualizar el catálogo.
+
+No utilizar alert() para las notificaciones.
+
+
+4. ADMINISTRADOR - ELIMINAR PRODUCTOS
+
+En la sección de administrador agrega una tabla o tarjetas de administración.
+
+Debe mostrar los productos obtenidos desde Firebase.
+
+Cada producto debe tener:
+
+- Nombre
+- Categoría
+- Precio
+- Stock
+- Botón "Eliminar"
+
+Al presionar "Eliminar":
+
+1. Confirmar con el usuario.
+2. Ejecutar:
+
+DELETE /productos/{id}.json
+
+utilizando el ID real generado por Firebase.
+
+3. Mostrar Toast:
+
+"Producto eliminado correctamente"
+
+4. Actualizar la lista.
+5. Actualizar el catálogo.
+
+No eliminar todos los productos.
+
+Solo eliminar el producto seleccionado.
+
+
+5. CATÁLOGO
+
+Conservar el diseño actual de las tarjetas.
+
+Agregar a las tarjetas:
+
+- Imagen del producto si existe.
+- Nombre.
+- Categoría.
+- Precio.
+- Stock.
+- Botón "Agregar al Carrito".
+
+La información debe venir de Firebase.
+
+Si no hay productos:
+
+"No hay productos disponibles."
+
+Si un producto tiene stock 0:
+
+Mostrar:
+
+"Agotado"
+
+y deshabilitar el botón "Agregar al Carrito".
+
+
+6. BUSCADOR Y FILTRO
+
+CONSERVAR el buscador actual:
+
+searchInput
+
+y el filtro:
+
+categoryFilter
+
+Pero deben funcionar sobre los productos obtenidos desde Firebase.
+
+No utilizar nuevamente el arreglo estático original.
+
+El filtro debe continuar funcionando en tiempo real.
+
+
+7. CARRITO - FIREBASE
+
+Actualmente el carrito utiliza:
+
+let cart = [];
+
+Esto debe modificarse.
+
+El carrito debe persistirse en Firebase mediante:
+
+/carrito.json
+
+Cuando el usuario presione:
+
+"Agregar al Carrito"
+
+debe realizar un:
+
+POST /carrito.json
+
+Guardar como mínimo:
+
+{
+    productId: "...",
+    name: "...",
+    price: 85.00,
+    quantity: 1,
+    subtotal: 85.00
+}
+
+Utilizar el ID real del producto de Firebase.
+
+El precio debe manejarse como número, no como string.
+
+
+8. OBTENER CARRITO
+
+Crear o adaptar:
+
+async function obtenerCarrito()
+
+Debe ejecutar:
+
+GET /carrito.json
+
+Después:
+
+1. Obtener los datos.
+2. Convertirlos correctamente.
+3. Mostrar los productos dentro de:
+
+<ul id="cartList"></ul>
+
+4. Calcular subtotales.
+5. Calcular el total.
+6. Actualizar:
+
+cartTotal
+
+Si Firebase devuelve null:
+
+Mostrar:
+
+"El carrito está vacío"
+
+
+9. CANTIDADES DEL CARRITO
+
+Si el mismo producto se agrega varias veces, manejar correctamente la cantidad.
+
+Ejemplo:
+
+Teclado RGB
+Cantidad: 2
+Precio: $85.00
+Subtotal: $170.00
+
+Mostrar botones para aumentar/disminuir cantidad si es posible.
+
+No permitir cantidades superiores al stock disponible.
+
+
+10. ELIMINAR PRODUCTO DEL CARRITO
+
+El carrito actual ya permite eliminar productos.
+
+Conservar esa funcionalidad.
+
+Pero ahora debe eliminarse también el registro correspondiente de Firebase.
+
+Utilizar:
+
+DELETE /carrito/{id}.json
+
+donde {id} es el ID generado por Firebase para el registro del carrito.
+
+
+11. VACIAR CARRITO
+
+Conservar el botón actual:
+
+"Vaciar Carrito"
+
+Pero ahora debe ejecutar:
+
+DELETE /carrito.json
+
+Después:
+
+1. Actualizar la interfaz.
+2. Mostrar Toast:
+
+"Carrito vaciado correctamente"
+
+
+12. FINALIZAR COMPRA
+
+Agregar un botón:
+
+"Finalizar Compra"
+
+El proceso debe tener EXACTAMENTE 2 pasos.
+
+PASO 1:
+
+Crear una orden mediante:
+
+POST /ordenes.json
+
+La orden debe contener:
+
+{
+    date: "fecha actual",
+    items: [
+        {
+            productId: "...",
+            name: "...",
+            price: 85.00,
+            quantity: 1,
+            subtotal: 85.00
+        }
+    ],
+    total: 170.00
+}
+
+La fecha debe generarse automáticamente con JavaScript.
+
+PASO 2:
+
+Solamente si el POST de la orden fue exitoso:
+
+DELETE /carrito.json
+
+Esto vacía el carrito.
+
+Después mostrar:
+
+"Compra finalizada correctamente"
+
+IMPORTANTE:
+
+Si falla el POST de la orden:
+
+NO ejecutar DELETE /carrito.json.
+
+El carrito debe conservarse.
+
+
+13. ACTUALIZAR STOCK
+
+Al agregar productos al carrito:
+
+- Verificar stock.
+- No permitir agregar si stock es 0.
+- Mostrar Toast:
+
+"No hay stock disponible."
+
+No es obligatorio modificar el stock en Firebase después de agregar al carrito, a menos que sea necesario para mantener correctamente la lógica del laboratorio.
+
+Prioridad:
+cumplir correctamente POST / GET / DELETE.
+
+
+14. SPINNER / LOADING
+
+"Mostrar indicadores visuales mientras las promesas de fetch() estén en estado pending."
+
+Implementar un spinner de Bootstrap.
+
+Mostrarlo durante operaciones como:
+
+- Obtener productos
+- Crear producto
+- Eliminar producto
+- Obtener carrito
+- Agregar al carrito
+- Finalizar compra
+- Vaciar carrito
+
+Crear funciones similares a:
+
+mostrarLoading()
+ocultarLoading()
+
+Evitar múltiples acciones mientras una operación importante está en proceso.
+
+
+15. TOAST NOTIFICATIONS
+
+CONSERVAR el Toast actual.
+
+Utilizarlo para informar:
+
+- Producto creado correctamente.
+- Producto eliminado correctamente.
+- Producto agregado al carrito.
+- Producto eliminado del carrito.
+- Carrito vaciado.
+- Compra finalizada.
+- Error al conectar con Firebase.
+- Error al guardar.
+- Error al eliminar.
+- Stock insuficiente.
+
+No utilizar alert().
+
+
+16. MANEJO DE ERRORES
+
+Todas las funciones fetch() deben utilizar:
+
+try/catch
+
+También comprobar:
+
+response.ok
+
+Ejemplo:
+
+const response = await fetch(url);
+
+if (!response.ok) {
+    throw new Error("Error HTTP");
+}
+
+Los errores técnicos pueden aparecer en:
+
+console.error()
+
+pero al usuario debe mostrarse un Toast amigable.
+
+
+17. FUNCIONES ESPERADAS
+
+Organiza el JavaScript con funciones claras.
+
+Como mínimo:
+
+obtenerProductos()
+renderProducts()
+crearProducto()
+eliminarProducto(id)
+obtenerCarrito()
+renderCarrito()
+agregarAlCarrito(productId)
+eliminarDelCarrito(id)
+vaciarCarrito()
+finalizarCompra()
+applyFilters()
+showToast()
+mostrarLoading()
+ocultarLoading()
+
+Puedes crear funciones adicionales si son necesarias.
+
+
+18. DISEÑO
+
+CONSERVAR el diseño actual basado en Bootstrap.
+
+No quiero que cambies completamente la apariencia.
+
+Mantener:
+
+- Header
+- Buscador
+- Filtro
+- Catálogo
+- Cards
+- Carrito lateral
+- Toast
+- Responsive
+- Bootstrap 5.3.3
+
+Puedes agregar:
+
+- Navbar o pestañas para diferenciar Tienda y Administrador.
+- Formulario de administrador.
+- Tabla de administración.
+- Spinner.
+
+Pero debe seguir pareciendo el mismo proyecto TechStore.
+
+
+19. CATEGORÍAS
+
+Conservar las categorías actuales:
+
+Periféricos
+Pantallas
+Audio
+Accesorios
+
+Pero permitir que los productos creados desde el administrador puedan utilizar estas categorías.
