@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechStore | Administrador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Spinner / Loading overlay -->
+    <div id="loadingOverlay" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.7); z-index: 2000;">
+        <div class="spinner-border text-primary" style="width: 3.5rem; height: 3.5rem;" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+
+    <!-- Navbar de estado de conexión -->
+    <nav class="navbar navbar-dark bg-dark px-3">
+        <span class="navbar-brand mb-0 h1">⚙️ TechStore Admin</span>
+        <div class="d-flex align-items-center gap-2">
+            <div id="statusSpinner" class="spinner-border spinner-border-sm text-warning d-none" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <span id="statusBadge" class="badge bg-success d-none">🟢 Conectado a Firebase</span>
+        </div>
+    </nav>
+    <div id="connectionAlert" class="alert alert-danger text-center mb-0 rounded-0 d-none" role="alert">
+        🔴 Error de conexión con la base de datos
+    </div>
+
+    <header class="bg-dark text-white text-center py-5 mb-4">
+        <h1 class="display-5 fw-bold">⚙️ TechStore Administrador</h1>
+        <p class="lead mb-0">Gestión de inventario de productos.</p>
+        <a href="index.html" class="btn btn-outline-light mt-3">🛍️ Ir a la Tienda</a>
+    </header>
+
+    <main class="container pb-5">
+        <div class="row">
+            <section class="col-lg-5 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                        <h2 class="h5 mb-0">Nuevo Producto</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="adminForm">
+                            <div class="mb-3">
+                                <label for="productName" class="form-label">Nombre del producto</label>
+                                <input type="text" id="productName" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productPrice" class="form-label">Precio</label>
+                                <input type="number" id="productPrice" class="form-control" min="0" step="0.01" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productCategory" class="form-label">Categoría</label>
+                                <select id="productCategory" class="form-select" required>
+                                    <option value="Periféricos">Periféricos</option>
+                                    <option value="Pantallas">Pantallas</option>
+                                    <option value="Audio">Audio</option>
+                                    <option value="Accesorios">Accesorios</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="productImage" class="form-label">URL de imagen</label>
+                                <input type="url" id="productImage" class="form-control" placeholder="https://...">
+                            </div>
+                            <div class="mb-3">
+                                <label for="productStock" class="form-label">Cantidad en stock</label>
+                                <input type="number" id="productStock" class="form-control" min="0" step="1" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Crear Producto</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <section class="col-lg-7 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h2 class="h5 mb-0">Inventario</h2>
+                        <select id="sortSelect" class="form-select form-select-sm w-auto">
+                            <option value="default">Ordenar por...</option>
+                            <option value="price-asc">Precio: Menor a Mayor</option>
+                            <option value="price-desc">Precio: Mayor a Menor</option>
+                            <option value="name-asc">Nombre: A - Z</option>
+                            <option value="stock-asc">Stock: Crítico primero</option>
+                        </select>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminProductsBody">
+                                <!-- Se llena dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Toast de confirmación -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div id="toastBody" class="toast-body"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación (reemplaza confirm()) -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar acción</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmModalBody" class="mb-0"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="confirmModalAcceptBtn" class="btn btn-danger">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 1. Configuración de Firebase
+        const DB_BASE = "https://cosami-ejercicio-default-rtdb.firebaseio.com";
+        const PRODUCTOS_URL = `${DB_BASE}/productos.json`;
+
+        // 2. Estado local
+        let productsCache = [];
+
+        // 3. Selección de elementos DOM
+        const adminForm = document.getElementById("adminForm");
+        const adminProductsBody = document.getElementById("adminProductsBody");
+        const sortSelect = document.getElementById("sortSelect");
+        const loadingOverlay = document.getElementById("loadingOverlay");
+        const statusSpinner = document.getElementById("statusSpinner");
+        const statusBadge = document.getElementById("statusBadge");
+        const connectionAlert = document.getElementById("connectionAlert");
+        const liveToastEl = document.getElementById("liveToast");
+        const liveToast = new bootstrap.Toast(liveToastEl);
+        const toastBody = document.getElementById("toastBody");
+        const confirmModalEl = document.getElementById("confirmModal");
+        const confirmModal = new bootstrap.Modal(confirmModalEl);
+        const confirmModalBody = document.getElementById("confirmModalBody");
+        const confirmModalAcceptBtn = document.getElementById("confirmModalAcceptBtn");
+
+        // 4. Spinner / Loading (overlay bloqueante de pantalla completa)
+        let loadingCount = 0;
+        function mostrarLoading() {
+            loadingCount++;
+            loadingOverlay.classList.remove("d-none");
+        }
+        function ocultarLoading() {
+            loadingCount = Math.max(0, loadingCount - 1);
+            if (loadingCount === 0) {
+                loadingOverlay.classList.add("d-none");
+            }
+        }
+
+        // 4b. Estado de conexión en la Navbar (pending / success / error)
+        let connectionAlertTimeout = null;
+        function setConexionPendiente() {
+            statusSpinner.classList.remove("d-none");
+            statusBadge.classList.add("d-none");
+        }
+        function setConexionExitosa() {
+            statusSpinner.classList.add("d-none");
+            statusBadge.classList.remove("d-none");
+            connectionAlert.classList.add("d-none");
+        }
+        function setConexionError() {
+            statusSpinner.classList.add("d-none");
+            statusBadge.classList.add("d-none");
+            connectionAlert.classList.remove("d-none");
+            clearTimeout(connectionAlertTimeout);
+            connectionAlertTimeout = setTimeout(() => connectionAlert.classList.add("d-none"), 5000);
+        }
+
+        // 5. Toast de notificaciones
+        function showToast(message, type = "success") {
+            liveToastEl.classList.remove("text-bg-success", "text-bg-danger");
+            liveToastEl.classList.add(type === "error" ? "text-bg-danger" : "text-bg-success");
+            toastBody.textContent = message;
+            liveToast.show();
+        }
+
+        // 5a2. Modal de confirmación (reemplaza confirm())
+        function mostrarConfirmacion(mensaje) {
+            return new Promise(resolve => {
+                confirmModalBody.textContent = mensaje;
+
+                function cleanup() {
+                    confirmModalAcceptBtn.removeEventListener("click", onAccept);
+                    confirmModalEl.removeEventListener("hidden.bs.modal", onHidden);
+                }
+                function onAccept() {
+                    cleanup();
+                    confirmModal.hide();
+                    resolve(true);
+                }
+                function onHidden() {
+                    cleanup();
+                    resolve(false);
+                }
+
+                confirmModalAcceptBtn.addEventListener("click", onAccept);
+                confirmModalEl.addEventListener("hidden.bs.modal", onHidden);
+                confirmModal.show();
+            });
+        }
+
+        // 5b. Helper genérico de peticiones a Firebase (evita duplicar fetch/try/catch)
+        async function apiFetch(url, options = {}) {
+            setConexionPendiente();
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) {
+                    throw new Error(`Error HTTP ${res.status} al conectar con Firebase`);
+                }
+                const data = await res.json();
+                setConexionExitosa();
+                return data;
+            } catch (error) {
+                setConexionError();
+                throw error;
+            }
+        }
+
+        // 5c. Convierte el objeto NoSQL de Firebase en un arreglo, conservando la key como identificador
+        function normalizarObjetoFirebase(data, keyName = "id") {
+            if (!data) return [];
+            return Object.entries(data).map(([key, value]) => ({ [keyName]: key, ...value }));
+        }
+
+        // 5d. Ordenamiento en memoria (sin volver a consultar Firebase)
+        function ordenarProductos(items, criterio) {
+            const arr = [...items];
+            switch (criterio) {
+                case "price-asc":
+                    arr.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+                    break;
+                case "price-desc":
+                    arr.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+                    break;
+                case "name-asc":
+                    arr.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+                case "stock-asc":
+                    arr.sort((a, b) => (Number(a.stock) || 0) - (Number(b.stock) || 0));
+                    break;
+                default:
+                    break;
+            }
+            return arr;
+        }
+        sortSelect.addEventListener("change", renderAdminProducts);
+
+        // 6. Obtener productos desde Firebase (GET)
+        async function obtenerProductos() {
+            mostrarLoading();
+            try {
+                const data = await apiFetch(PRODUCTOS_URL);
+                productsCache = normalizarObjetoFirebase(data, "dbId");
+            } catch (error) {
+                console.error("Error al obtener productos:", error);
+                showToast("Error al conectar con Firebase.", "error");
+                productsCache = [];
+            } finally {
+                renderAdminProducts();
+                ocultarLoading();
+            }
+        }
+
+        // 7. Validar el formulario de producto (precio > 0, stock no negativo)
+        function validarProducto({ name, category, price, stock }) {
+            if (!name || !category) {
+                return "Completa el nombre y la categoría del producto.";
+            }
+            if (isNaN(price) || price <= 0) {
+                return "El precio debe ser mayor que 0.";
+            }
+            if (isNaN(stock) || stock < 0) {
+                return "El stock no puede ser negativo.";
+            }
+            return null;
+        }
+
+        // 8. Alta de producto (POST)
+        async function crearProducto(event) {
+            event.preventDefault();
+
+            const nuevoProducto = {
+                name: document.getElementById("productName").value.trim(),
+                price: parseFloat(document.getElementById("productPrice").value),
+                category: document.getElementById("productCategory").value,
+                image: document.getElementById("productImage").value.trim(),
+                stock: parseInt(document.getElementById("productStock").value, 10)
+            };
+
+            const errorValidacion = validarProducto(nuevoProducto);
+            if (errorValidacion) {
+                showToast(errorValidacion, "error");
+                return;
+            }
+
+            mostrarLoading();
+            try {
+                await apiFetch(PRODUCTOS_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(nuevoProducto)
+                });
+                showToast("Producto creado correctamente");
+                adminForm.reset();
+                await obtenerProductos();
+            } catch (error) {
+                console.error("Error al crear producto:", error);
+                showToast("Error al guardar el producto.", "error");
+            } finally {
+                ocultarLoading();
+            }
+        }
+        adminForm.addEventListener("submit", crearProducto);
+
+        // 9. Consulta y renderizado en tabla (GET) — inventario completo, sin filtrar por stock
+        function renderAdminProducts() {
+            adminProductsBody.innerHTML = "";
+            if (productsCache.length === 0) {
+                adminProductsBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">El inventario está vacío.</td></tr>';
+                return;
+            }
+            const items = ordenarProductos(productsCache, sortSelect.value);
+            items.forEach(product => {
+                const stock = Number(product.stock) || 0;
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+          <td>${product.name}</td>
+          <td>${product.category}</td>
+          <td>$${(Number(product.price) || 0).toFixed(2)}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-sm btn-outline-secondary" ${stock <= 0 ? "disabled" : ""} onclick="ajustarStock('${product.dbId}', -1)">-</button>
+              <span class="${stock <= 0 ? "text-danger fw-bold" : ""}">${stock}</span>
+              <button class="btn btn-sm btn-outline-secondary" onclick="ajustarStock('${product.dbId}', 1)">+</button>
+            </div>
+          </td>
+          <td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="eliminarProducto('${product.dbId}')">Borrar</button></td>
+        `;
+                adminProductsBody.appendChild(tr);
+            });
+        }
+
+        // 10. Ajustar stock rápidamente (PATCH)
+        async function ajustarStock(dbId, delta) {
+            const product = productsCache.find(p => p.dbId === dbId);
+            if (!product) return;
+            const nuevoStock = (Number(product.stock) || 0) + delta;
+            if (nuevoStock < 0) return;
+
+            mostrarLoading();
+            try {
+                await apiFetch(`${DB_BASE}/productos/${dbId}.json`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ stock: nuevoStock })
+                });
+                showToast("Stock actualizado correctamente");
+                await obtenerProductos();
+            } catch (error) {
+                console.error("Error al actualizar stock:", error);
+                showToast("Error al actualizar el stock.", "error");
+            } finally {
+                ocultarLoading();
+            }
+        }
+
+        // 11. Baja de producto (DELETE)
+        async function eliminarProducto(dbId) {
+            const confirmado = await mostrarConfirmacion("¿Seguro que deseas eliminar este producto?");
+            if (!confirmado) return;
+            mostrarLoading();
+            try {
+                await apiFetch(`${DB_BASE}/productos/${dbId}.json`, { method: "DELETE" });
+                showToast("Producto eliminado correctamente");
+                await obtenerProductos();
+            } catch (error) {
+                console.error("Error al eliminar producto:", error);
+                showToast("Error al eliminar el producto.", "error");
+            } finally {
+                ocultarLoading();
+            }
+        }
+
+        // 12. Carga inicial
+        obtenerProductos();
+    </script>
+</body>
+</html>
